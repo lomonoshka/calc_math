@@ -1,29 +1,32 @@
-//
-// Created by Scrin on 14.10.2020.
-//
-#ifndef BEAM_CALCULATOR_BEAM_H
-#define BEAM_CALCULATOR_BEAM_H
-#include <string>
-#include <map>
-#include <fstream>
-struct  Boundary {
+#pragma once
 
-};
+#include <string>
+#include <set>
+#include <fstream>
+#include <memory>
+#include "Actions.h"
+#include "Supports.h"
 
 class Beam {
 public:
   explicit Beam(double length) : length_(length){};
-  void addForce(double position, double value);
-  void addUniformLoad(double start_position, double end_position, double value);
-  void addMoment(double position, double value);
-  void addBoundary(double position, const Boundary& boundary);
+  void addAction(const Action& action);
+  void addSupport(const Support& support);
   void plot() const;
+  void CalculateReactions() const;
 private:
+  vector<double> CalculateInitialParameters() const;
+
   double length_;
-  std::map<double, double> forces;
-  std::map<std::pair<double, double>, double> uniform_loads;
-  std::map<double, double> moments;
-  std::map<double, Boundary> boundaries;
+  SuportType left_edge = SupportType::FreeEdge;
+  SuportType right_edge = SupportType::FreeEdge;
+  double resultant_moment;
+  double resultant_forse;
+  std::set<std::shared_ptr<Action>> actions;
+  std::set<std::shared_ptr<Support>> supports;
 };
 
-#endif //BEAM_CALCULATOR_BEAM_H
+template <typename collection> 
+void writeCollection(collection c, string name);
+template <typename l, typename r> 
+ofstream& operator<<(ofstream& stream, pair<l, r> p);

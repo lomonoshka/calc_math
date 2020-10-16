@@ -48,8 +48,7 @@ for name in file_names:
     data["{}_val".format(name)] = np.asarray([float(val) for val in f_value.read().split()])
 
 fig, ax = plt.subplots(figsize=(8, 6))
-ax.set_xlim(0, 10)
-ax.set_ylim(0, 1)
+ax.set_xlim(-1, size + 0.1 * size)
 line1 = matplotlib.lines.Line2D ([0, 10], [beam_y, beam_y], color="k")
 line2 = matplotlib.lines.Line2D ([0, 10], [0.48, 0.48], color="k")
 line3 = matplotlib.lines.Line2D ([10, 10], [0.48, 0.52], color="k")
@@ -69,5 +68,6 @@ rs = data["uniform_loads_key"].reshape(-1, 2).T[1]
 
 for l, r, value in zip(ls, rs, data["uniform_loads_val"]):
     addUniformLoad(ax, l, r, value)
-
+frame = plt.gca()
+frame.axes.yaxis.set_visible(False)
 plt.show()

@@ -4,32 +4,72 @@
 #include "Beam.h"
 
 using namespace std;
-template <typename collection> 
-void writeCollection(collection c, string name);
-template <typename l, typename r> 
-ofstream& operator<<(ofstream& stream, pair<l, r> p);
 
-void Beam::addForce(double position, double value) {
-  forces[position] = value;
+void Beam::addAction(const Action& action) {
+  actions.insert(action.get_shared_ptr());
 }
 
-void Beam::addUniformLoad(double start_position, double end_position, double value) {
-  uniform_loads[std::make_pair(start_position, end_position)] = value;
+void Beam::AddSupport(const Support& support) {
+  if(support.position == 0) {
+    left_edge = support.type();
+    return;
+  } else if(support.position == length_) {
+    right_edge = support.type();
+    return;
+  }
+
+  supports.insert(support.get_shared_ptr());
+}
+// Do not know how to avoid hardcode
+vector<double> Beam::CalculateInitialParameters() const{
+  vector<double> matrix(16);
+  vector<double> b(4);
+  
+  auto fill = [matrix, b](vector<double> matrix_elements, 
+  vector<double> b_elements, size_t lm, size_t rm, size_t lb, size_t rb)
+  {
+    for(int i = lm; i < rm; ++i) {
+        matrix[i] = matrix_rows[i];
+      }
+      for(int i = lb; i < rb; ++i) {
+        b[i] = b_elements[i];
+  }
+
+  switch(left_edge) {
+    case FixedSupport:
+      vector<double> matrix_elements = {1, 0, 0, 0,
+                                        0, 1, 0, 0};
+      vector<double> b_elements = {0, 0};
+      fill(matrix_elements, b_elements, 0, 8, 0, 2);
+      break;
+    case FreeEdge:
+      vector<double> matrix_elements = {0, 0, 1, 0,
+                                        0, 0, 0, 1};
+      vector<double> b_elements = {-resultant_moment, -resultant_force};
+      fill(matrix_elements, b_elements, 8, 16, 2, 4);
+      break;
+    case HingeSupport:
+      vector<double> matrix_elements = {1, 0, 0, 0,
+                                        0, 0, 1, 0};
+      vector<double> b_elements = {0, -resultant_moment};
+      fill(matrix_elements, b_elements, 0, 4, 0, 1);
+      fill(matrix_elements, b_elements, 8, 12, 2, 3);
+      break;
+    case ElasticSupport:
+      vector<double> matrix_elements = {1, 0, 0, 0,
+                                        0, 0, 1, 0};
+      vector<double> b_elements = {0, -resultant_moment};
+      fill(matrix_elements, b_elements, 0, 4, 0, 1);
+      fill(matrix_elements, b_elements, 8, 12, 2, 3);
+      break;
+  }
 }
 
-void Beam::addMoment(double position, double value) {
-  moments[position] = value;
-}
-
-void Beam::addBoundary(double position, const Boundary& boundary) {
-  boundaries[position] = boundary;
+void Beam::CalculateReactions() const {
+  
 }
 
 void Beam::plot() const {
-  writeCollection(forces, "beam_data/forces");
-  writeCollection(uniform_loads, "beam_data/uniform_loads");
-  writeCollection(moments, "beam_data/moments");
-  //writeCollection(beam_data, forces);
   system("python3 my_script.py");
 }
 
